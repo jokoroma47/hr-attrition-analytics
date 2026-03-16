@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why Employees Leave — People Analytics | Data Analytics Portfolio</title>
+<meta name="description" content="Interactive people analytics dashboard — 14,999 employees, 10 departments, workforce attrition analysis. Built with HTML5 and Chart.js.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root{
+    --primary:#0F4C75;--primary-light:#1B6CA8;--primary-hover:#0A3A5C;
+    --rose:#E11D48;--rose-light:#FFF1F2;--rose-dark:#9F1239;
+    --emerald:#059669;--emerald-light:#ECFDF5;--emerald-dark:#064E3B;
+    --amber:#D97706;--amber-light:#FFFBEB;--amber-dark:#78350F;
+    --violet:#7C3AED;--sky:#0EA5E9;--sky-light:#F0F9FF;
+    --bg:#F0F4F8;--card:#FFFFFF;--border:#E2E8F0;
+    --text:#1E293B;--text2:#64748B;--text3:#94A3B8;
+    --radius:14px;--radius-sm:8px;
+    --transition:all 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#0F172A;--card:#1E293B;--border:#334155;
+      --text:#F1F5F9;--text2:#94A3B8;--text3:#475569;
+      --rose-light:#1C0A10;--emerald-light:#052E16;--amber-light:#1C1408;--sky-light:#0C1929;
+    }
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;overflow-x:hidden}
+
+  /* ── Scroll reveal ── */
+  .reveal{opacity:0;transform:translateY(20px);transition:opacity 0.5s ease,transform 0.5s ease}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+
+  /* ── Header ── */
+  .header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);padding:0;position:sticky;top:0;z-index:200;box-shadow:0 2px 20px rgba(15,76,117,0.3)}
+  .header-inner{max-width:1400px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  .header-brand{display:flex;align-items:center;gap:14px}
+  .header-icon{width:44px;height:44px;background:rgba(255,255,255,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(255,255,255,0.2);transition:var(--transition)}
+  .header-icon:hover{background:rgba(255,255,255,0.2);transform:scale(1.05)}
+  .header-icon svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .header-title{color:#fff;font-size:17px;font-weight:600;letter-spacing:-0.02em}
+  .header-sub{color:rgba(255,255,255,0.6);font-size:11px;margin-top:2px}
+  .header-stats{display:flex;gap:8px;flex-wrap:wrap}
+  .hstat{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);border-radius:10px;padding:7px 14px;text-align:center;transition:var(--transition);cursor:default}
+  .hstat:hover{background:rgba(255,255,255,0.18);transform:translateY(-2px)}
+  .hstat-val{color:#fff;font-size:15px;font-weight:600}
+  .hstat-lbl{color:rgba(255,255,255,0.55);font-size:9px;text-transform:uppercase;letter-spacing:0.06em;margin-top:1px}
+
+  /* ── Nav ── */
+  .nav-bar{background:var(--card);border-bottom:1px solid var(--border);box-shadow:0 1px 8px rgba(0,0,0,0.05)}
+  .nav-inner{max-width:1400px;margin:0 auto;padding:8px 24px;display:flex;align-items:center;gap:4px;overflow-x:auto}
+  .nav-btn{padding:8px 18px;background:transparent;border:none;border-radius:var(--radius-sm);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:var(--transition);position:relative}
+  .nav-btn::after{content:'';position:absolute;bottom:0;left:50%;right:50%;height:2px;background:var(--primary-light);border-radius:2px;transition:var(--transition)}
+  .nav-btn:hover{color:var(--primary-light);background:var(--sky-light)}
+  .nav-btn:hover::after{left:10%;right:10%}
+  .nav-btn.active{color:var(--primary-light);background:var(--sky-light);font-weight:600}
+  .nav-btn.active::after{left:10%;right:10%}
+
+  /* ── Main ── */
+  .main{max-width:1400px;margin:0 auto;padding:24px}
+  .page{display:none;animation:fadeIn 0.3s ease}.page.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ── Grids ── */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+  @media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+  @media(max-width:1100px){.grid3{grid-template-columns:1fr 1fr}.grid4{grid-template-columns:repeat(2,1fr)}}
+  .full{grid-column:1/-1}.mb16{margin-bottom:16px}
+
+  /* ── KPI cards ── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden;transition:var(--transition);cursor:default}
+  .kpi:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.1);border-color:var(--primary-light)}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0;transition:var(--transition)}
+  .kpi:hover::before{height:4px}
+  .kpi.blue::before{background:var(--primary-light)}
+  .kpi.rose::before{background:var(--rose)}
+  .kpi.emerald::before{background:var(--emerald)}
+  .kpi.amber::before{background:var(--amber)}
+  .kpi.violet::before{background:var(--violet)}
+  .kpi.sky::before{background:var(--sky)}
+  .kpi-val{font-size:24px;font-weight:700;color:var(--text);line-height:1.1;margin-top:6px}
+  .kpi-lbl{font-size:11px;color:var(--text2);margin-top:5px}
+
+  /* ── Cards ── */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:var(--transition)}
+  .card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.07)}
+  .card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .card-title::before{content:'';width:3px;height:14px;border-radius:2px;background:var(--primary-light);display:inline-block;flex-shrink:0}
+
+  /* ── Charts ── */
+  .cw{position:relative;width:100%}
+  .h160{height:160px}.h180{height:180px}.h200{height:200px}.h220{height:220px}.h260{height:260px}.h300{height:300px}.h340{height:340px}
+
+  /* ── Alerts ── */
+  .alert{border-radius:10px;padding:11px 15px;font-size:12px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;line-height:1.7;border:1px solid;transition:var(--transition)}
+  .alert:hover{transform:translateX(3px)}
+  .alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+  .alert.rose{background:var(--rose-light);color:var(--rose-dark);border-color:#FECDD3}.alert.rose .alert-dot{background:var(--rose)}
+  .alert.emerald{background:var(--emerald-light);color:var(--emerald-dark);border-color:#A7F3D0}.alert.emerald .alert-dot{background:var(--emerald)}
+  .alert.amber{background:var(--amber-light);color:var(--amber-dark);border-color:#FDE68A}.alert.amber .alert-dot{background:var(--amber)}
+  .alert.sky{background:var(--sky-light);color:#0C4A6E;border-color:#BAE6FD}.alert.sky .alert-dot{background:var(--sky)}
+
+  /* ── Legend ── */
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+  .legend span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);transition:var(--transition);cursor:default}
+  .legend span:hover{color:var(--text)}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block;flex-shrink:0}
+
+  /* ── Horizontal bars ── */
+  .hbar-list{overflow-y:auto}
+  .hbar-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:var(--radius-sm);transition:var(--transition);cursor:default}
+  .hbar-row:hover{background:var(--bg)}
+  .hbar-lbl{flex:0 0 130px;font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hbar-track{flex:1;height:10px;background:var(--bg);border-radius:5px;overflow:hidden}
+  .hbar-fill{height:100%;border-radius:5px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
+  .hbar-val{flex:0 0 44px;text-align:right;font-size:11px;font-weight:600;color:var(--text)}
+
+  /* ── Risk cards ── */
+  .risk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px}
+  .risk-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;border-top:3px solid;transition:var(--transition)}
+  .risk-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,0.09)}
+  .risk-val{font-size:22px;font-weight:700;color:var(--text)}
+  .risk-lbl{font-size:11px;color:var(--text2);margin-top:4px}
+  .risk-sub{font-size:10px;color:var(--text3);margin-top:3px}
+
+  /* ── Matrix table ── */
+  .matrix-table{width:100%;border-collapse:collapse;font-size:11px}
+  .matrix-table th{padding:7px 10px;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;border-bottom:2px solid var(--border);text-align:center}
+  .matrix-table th:first-child{text-align:left}
+  .matrix-table tr{transition:var(--transition)}
+  .matrix-table tr:hover td{background:var(--bg)}
+  .matrix-table td{padding:5px 6px;border-bottom:1px solid var(--border)}
+  .matrix-table td:first-child{font-size:11px;color:var(--text2);padding-left:8px}
+  .mc{border-radius:6px;padding:4px 8px;font-size:11px;font-weight:600;display:inline-block;width:100%;text-align:center;transition:var(--transition)}
+  .mc:hover{filter:brightness(0.95)}
+
+  /* ── Recommendation cards ── */
+  .rec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px}
+  .rec-card{background:var(--emerald-light);border:1px solid #BBF7D0;border-radius:var(--radius);padding:16px;transition:var(--transition);cursor:default}
+  .rec-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(5,150,105,0.15);border-color:var(--emerald)}
+  .rec-num{width:26px;height:26px;background:var(--emerald);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;margin-bottom:10px;transition:var(--transition)}
+  .rec-card:hover .rec-num{transform:scale(1.1)}
+  .rec-title{font-size:12px;font-weight:700;color:var(--emerald-dark);margin-bottom:5px}
+  .rec-body{font-size:11px;color:#065F46;line-height:1.6}
+
+  /* ── Footer ── */
+  .footer{background:var(--primary);color:rgba(255,255,255,0.5);text-align:center;padding:24px;font-size:11px;margin-top:40px}
+  .footer a{color:rgba(255,255,255,0.75);text-decoration:none;transition:var(--transition)}
+  .footer a:hover{color:#fff}
+
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div>
+        <div class="header-title">Why Employees Leave — People Analytics &amp; Workforce Attrition</div>
+        <div class="header-sub">14,999 employees &nbsp;&bull;&nbsp; 10 departments &nbsp;&bull;&nbsp; HR Portfolio Project</div>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="hstat"><div class="hstat-val">14,999</div><div class="hstat-lbl">Employees</div></div>
+      <div class="hstat"><div class="hstat-val">23.81%</div><div class="hstat-lbl">Attrition Rate</div></div>
+      <div class="hstat"><div class="hstat-val">0.227</div><div class="hstat-lbl">Satisfaction Gap</div></div>
+      <div class="hstat"><div class="hstat-val">56.6%</div><div class="hstat-lbl">Year 5 Crisis</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav-bar">
+  <div class="nav-inner">
+    <button class="nav-btn active" onclick="showPage('p1',this)">Overview</button>
+    <button class="nav-btn" onclick="showPage('p2',this)">Workforce Profile</button>
+    <button class="nav-btn" onclick="showPage('p3',this)">Attrition Drivers</button>
+    <button class="nav-btn" onclick="showPage('p4',this)">Risk Analysis</button>
+    <button class="nav-btn" onclick="showPage('p5',this)">Retention Intel</button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- PAGE 1 -->
+<div class="page active" id="p1">
+  <div class="kpi-grid reveal">
+    <div class="kpi blue"><div class="kpi-val">14,999</div><div class="kpi-lbl">Total employees</div></div>
+    <div class="kpi rose"><div class="kpi-val">3,571</div><div class="kpi-lbl">Employees who left</div></div>
+    <div class="kpi rose"><div class="kpi-val">23.81%</div><div class="kpi-lbl">Overall attrition rate</div></div>
+    <div class="kpi emerald"><div class="kpi-val">76.19%</div><div class="kpi-lbl">Retention rate</div></div>
+    <div class="kpi amber"><div class="kpi-val">0.44</div><div class="kpi-lbl">Avg satisfaction — left</div></div>
+    <div class="kpi emerald"><div class="kpi-val">0.67</div><div class="kpi-lbl">Avg satisfaction — stayed</div></div>
+    <div class="kpi sky"><div class="kpi-val">207.4 hrs</div><div class="kpi-lbl">Avg monthly hours — leavers</div></div>
+    <div class="kpi violet"><div class="kpi-val">2.13%</div><div class="kpi-lbl">Promotion rate (5 years)</div></div>
+  </div>
+  <div class="alert rose reveal">
+    <div class="alert-dot"></div>
+    <div>1 in 4 employees leaves. The satisfaction gap between leavers (0.44) and stayers (0.67) is 0.23 points — the single strongest predictor of attrition. Only 2.13% of staff are promoted in 5 years, yet promoted employees leave at 4x lower rates (6.0% vs 24.2%).</div>
+  </div>
+  <div class="grid2 reveal">
+    <div class="card">
+      <div class="card-title">Attrition vs retention split</div>
+      <div class="legend"><span><i style="background:#E11D48"></i>Left (3,571 — 23.8%)</span><span><i style="background:#059669"></i>Stayed (11,428 — 76.2%)</span></div>
+      <div class="cw h200"><canvas id="c1-split"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Key metric comparison — left vs stayed</div>
+      <div class="legend"><span><i style="background:#E11D48"></i>Left</span><span><i style="background:#059669"></i>Stayed</span></div>
+      <div class="cw h200"><canvas id="c1-compare"></canvas></div>
+    </div>
+  </div>
+  <div class="grid3 reveal">
+    <div class="card">
+      <div class="card-title">Salary band distribution</div>
+      <div class="legend"><span><i style="background:#E11D48"></i>Low (48.8%)</span><span><i style="background:#D97706"></i>Medium (43.0%)</span><span><i style="background:#059669"></i>High (8.2%)</span></div>
+      <div class="cw h180"><canvas id="c1-salary"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Attrition rate by salary band</div>
+      <div class="cw h180"><canvas id="c1-sal-attr"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Promotion impact on attrition</div>
+      <div class="cw h180"><canvas id="c1-promo"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page" id="p2">
+  <div class="kpi-grid reveal">
+    <div class="kpi rose"><div class="kpi-val">HR</div><div class="kpi-lbl">Highest attrition dept — 29.1%</div></div>
+    <div class="kpi emerald"><div class="kpi-val">Management</div><div class="kpi-lbl">Lowest attrition dept — 14.4%</div></div>
+    <div class="kpi amber"><div class="kpi-val">Year 5</div><div class="kpi-lbl">Peak attrition tenure — 56.6%</div></div>
+    <div class="kpi blue"><div class="kpi-val">Sales</div><div class="kpi-lbl">Largest department — 27.6%</div></div>
+  </div>
+  <div class="grid2 reveal">
+    <div class="card">
+      <div class="card-title">Attrition rate by department (%)</div>
+      <div class="cw h300"><canvas id="c2-dept"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Department size vs employees left</div>
+      <div class="legend"><span><i style="background:#1B6CA8"></i>Total employees</span><span><i style="background:#E11D48"></i>Employees left</span></div>
+      <div class="cw h300"><canvas id="c2-size"></canvas></div>
+    </div>
+  </div>
+  <div class="card full reveal">
+    <div class="card-title">Attrition rate by tenure — years at company</div>
+    <div class="alert amber"><div class="alert-dot"></div><div>Year 5 is the crisis point — 56.6% of employees with 5 years tenure leave. Employees who reach Year 7 show 0% attrition — they are committed for the long term. Early intervention at Year 3 is critical.</div></div>
+    <div class="cw h220"><canvas id="c2-tenure"></canvas></div>
+  </div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page" id="p3">
+  <div class="kpi-grid reveal">
+    <div class="kpi rose"><div class="kpi-val">62.5%</div><div class="kpi-lbl">Attrition — very low satisfaction</div></div>
+    <div class="kpi rose"><div class="kpi-val">100%</div><div class="kpi-lbl">Attrition — 7 project employees</div></div>
+    <div class="kpi amber"><div class="kpi-val">38.8%</div><div class="kpi-lbl">Attrition — 250+ hrs/month</div></div>
+    <div class="kpi emerald"><div class="kpi-val">1.78%</div><div class="kpi-lbl">Attrition — 3 project sweet spot</div></div>
+  </div>
+  <div class="grid2 reveal">
+    <div class="card">
+      <div class="card-title">Attrition rate by satisfaction level bucket</div>
+      <div class="cw h220"><canvas id="c3-sat"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Attrition rate by number of projects assigned</div>
+      <div class="alert rose"><div class="alert-dot"></div><div>Every single employee assigned 7 projects left — 100% attrition with no exceptions. 3 projects is the optimal workload at only 1.78%.</div></div>
+      <div class="cw h180"><canvas id="c3-proj"></canvas></div>
+    </div>
+  </div>
+  <div class="grid2 reveal" style="margin-top:0">
+    <div class="card">
+      <div class="card-title">Attrition rate by monthly hours worked</div>
+      <div class="alert amber"><div class="alert-dot"></div><div>U-shaped risk curve — both under 150hrs (35.6%) and over 250hrs (38.8%) are danger zones. The 175–200hr sweet spot has only 2.16% attrition.</div></div>
+      <div class="cw h180"><canvas id="c3-hrs"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Attrition rate by performance evaluation score</div>
+      <div class="alert sky"><div class="alert-dot"></div><div>Bimodal pattern — medium (34.2%) AND excellent (30.8%) performers both leave at high rates. Only the 0.6–0.8 "good" band is well retained at 5.8%.</div></div>
+      <div class="cw h180"><canvas id="c3-eval"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4 -->
+<div class="page" id="p4">
+  <div class="alert rose reveal"><div class="alert-dot"></div><div>High-risk profile: Dissatisfied (satisfaction &lt; 0.5) + overworked (&gt;220 hrs/month) + not promoted = 1,559 employees at 60.4% attrition — 2.5x the company average. IT and Technical departments are most exposed.</div></div>
+  <div class="risk-grid reveal">
+    <div class="risk-card" style="border-top-color:#E11D48"><div class="risk-val">1,559</div><div class="risk-lbl">High-risk employees identified</div><div class="risk-sub">Dissatisfied + overworked + no promotion</div></div>
+    <div class="risk-card" style="border-top-color:#E11D48"><div class="risk-val">60.4%</div><div class="risk-lbl">High-risk attrition rate</div><div class="risk-sub">2.5x the company average of 23.8%</div></div>
+    <div class="risk-card" style="border-top-color:#D97706"><div class="risk-val">267.1 hrs</div><div class="risk-lbl">Avg monthly hours — high risk</div><div class="risk-sub">33% above company average of 201 hrs</div></div>
+    <div class="risk-card" style="border-top-color:#D97706"><div class="risk-val">0.187</div><div class="risk-lbl">Avg satisfaction — high risk</div><div class="risk-sub">Very Low band — severe disengagement</div></div>
+  </div>
+  <div class="grid2 reveal">
+    <div class="card">
+      <div class="card-title">High-risk employees by department</div>
+      <div class="hbar-list" id="c4-risk-bars"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Department x salary attrition matrix (%)</div>
+      <div style="overflow-x:auto"><table class="matrix-table" id="c4-matrix"></table></div>
+    </div>
+  </div>
+  <div class="card full reveal" style="margin-top:0">
+    <div class="card-title">Variable correlation with attrition — ranked by strength</div>
+    <div class="cw h180"><canvas id="c4-corr"></canvas></div>
+  </div>
+</div>
+
+<!-- PAGE 5 -->
+<div class="page" id="p5">
+  <div class="kpi-grid reveal">
+    <div class="kpi emerald"><div class="kpi-val">4.5x</div><div class="kpi-lbl">Low vs high salary attrition multiplier</div></div>
+    <div class="kpi emerald"><div class="kpi-val">4.1x</div><div class="kpi-lbl">Promotion protective effect</div></div>
+    <div class="kpi emerald"><div class="kpi-val">3.4x</div><div class="kpi-lbl">Work accident retention effect</div></div>
+    <div class="kpi violet"><div class="kpi-val">2,070</div><div class="kpi-lbl">Retention champions identified</div></div>
+  </div>
+  <div class="grid2 reveal">
+    <div class="card">
+      <div class="card-title">Promotion impact on attrition rate</div>
+      <div class="cw h220"><canvas id="c5-promo"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Work accident impact on attrition rate</div>
+      <div class="alert emerald"><div class="alert-dot"></div><div>Employees with a work accident leave at only 7.79% vs 26.52% — a 3.4x difference. Post-accident care and support appears to significantly improve loyalty and long-term engagement.</div></div>
+      <div class="cw h180"><canvas id="c5-acc"></canvas></div>
+    </div>
+  </div>
+  <div class="card full reveal" style="margin-bottom:16px">
+    <div class="card-title">Retention champions by department — stayed + eval ≥ 0.8 + satisfaction ≥ 0.7</div>
+    <div class="cw h200"><canvas id="c5-champs"></canvas></div>
+  </div>
+  <div class="card full reveal">
+    <div class="card-title">Top 5 retention recommendations</div>
+    <div class="rec-grid">
+      <div class="rec-card"><div class="rec-num">1</div><div class="rec-title">Cap projects at 5 maximum</div><div class="rec-body">6+ projects triggers 55%+ attrition. 7 projects = 100% attrition with zero exceptions. The optimal workload is 3–4 projects at under 10%.</div></div>
+      <div class="rec-card"><div class="rec-num">2</div><div class="rec-title">Review the low-salary band urgently</div><div class="rec-body">Low salary drives 29.7% attrition vs 6.6% for high — a 4.5x multiplier. Nearly half the workforce (48.8%) sits in this band.</div></div>
+      <div class="rec-card"><div class="rec-num">3</div><div class="rec-title">Increase the promotion rate from 2.1%</div><div class="rec-body">Promoted staff leave at 6% vs 24.2% for unpromoted — a 4x protective effect. The current 2.1% rate is critically low.</div></div>
+      <div class="rec-card"><div class="rec-num">4</div><div class="rec-title">Intervene at Year 3–5 tenure</div><div class="rec-body">56.6% of 5-year employees leave. Engagement programmes targeting Year 3 employees could prevent the Year 5 exodus before it happens.</div></div>
+      <div class="rec-card"><div class="rec-num">5</div><div class="rec-title">Audit the HR department culture</div><div class="rec-body">HR has the highest attrition at 29.1% — the team responsible for retention cannot retain itself. A systemic culture review is urgently needed.</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <p><strong>Why Employees Leave — People Analytics &amp; Workforce Attrition</strong> &nbsp;|&nbsp; Data Analytics Portfolio Project</p>
+  <p style="margin-top:6px">Built with HTML5, CSS3 &amp; JavaScript &nbsp;&bull;&nbsp; Tools: Excel &bull; MySQL &bull; Python &nbsp;&bull;&nbsp; Dataset: <a href="https://www.kaggle.com" target="_blank">Kaggle — HR Data Lab</a></p>
+</div>
+
+<script>
+const TX='#94A3B8',GC='rgba(0,0,0,0.04)';
+Chart.defaults.font.family='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+Chart.defaults.font.size=11;Chart.defaults.color=TX;
+
+function mk(id,type,labels,datasets,opts){
+  const el=document.getElementById(id);if(!el)return;
+  return new Chart(el,{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},layout:{padding:4},...opts}});
+}
+
+/* Page 1 */
+mk('c1-split','doughnut',['Left','Stayed'],[{data:[3571,11428],backgroundColor:['#E11D48','#059669'],borderWidth:3,borderColor:'#F0F4F8'}],{cutout:'68%',plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11},boxWidth:12,padding:14}}}});
+mk('c1-compare','bar',['Satisfaction','Evaluation','Projects','Tenure (yrs)'],
+  [{label:'Left',data:[0.440,0.718,3.856,3.877],backgroundColor:'#E11D48',borderRadius:5},
+   {label:'Stayed',data:[0.667,0.715,3.787,3.380],backgroundColor:'#059669',borderRadius:5}],
+  {scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{color:TX},grid:{color:GC}}}}
+);
+mk('c1-salary','doughnut',['Low','Medium','High'],[{data:[7316,6446,1237],backgroundColor:['#E11D48','#D97706','#059669'],borderWidth:3,borderColor:'#F0F4F8'}],{cutout:'60%',plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:10,padding:10}}}});
+mk('c1-sal-attr','bar',['High','Medium','Low'],[{data:[6.63,20.43,29.69],backgroundColor:['#059669','#D97706','#E11D48'],borderRadius:6}],{scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{callback:v=>v+'%',color:TX},grid:{color:GC}}}});
+mk('c1-promo','bar',['Not Promoted','Promoted'],[{data:[24.20,5.96],backgroundColor:['#E11D48','#059669'],borderRadius:6}],{scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{callback:v=>v+'%',color:TX},grid:{color:GC}}}});
+
+/* Page 2 */
+const DEPTS=['HR','Accounting','Technical','Support','Sales','Marketing','IT','Product Mgmt','R&D','Management'];
+const DATTR=[29.09,26.60,25.62,24.90,24.49,23.66,22.25,21.95,15.37,14.44];
+const DSIZE=[739,767,2720,2229,4140,858,1227,902,787,630];
+const DLEFT=[215,204,697,555,1014,203,273,198,121,91];
+const DCOL=DATTR.map(r=>r>=25?'#E11D48':r>=20?'#D97706':'#059669');
+mk('c2-dept','bar',DEPTS,[{data:DATTR,backgroundColor:DCOL,borderRadius:4}],{indexAxis:'y',scales:{x:{min:10,ticks:{callback:v=>v+'%',color:TX},grid:{color:GC}},y:{ticks:{color:TX,font:{size:10}},grid:{display:false}}}});
+mk('c2-size','bar',DEPTS,
+  [{label:'Total',data:DSIZE,backgroundColor:'#1B6CA8',borderRadius:4},
+   {label:'Left',data:DLEFT,backgroundColor:'#E11D48',borderRadius:4}],
+  {indexAxis:'y',scales:{x:{ticks:{color:TX},grid:{color:GC}},y:{ticks:{color:TX,font:{size:10}},grid:{display:false}}}}
+);
+mk('c2-tenure','bar',['2 yrs','3 yrs','4 yrs','5 yrs','6 yrs','7 yrs','8 yrs','10 yrs'],
+  [{data:[1.63,24.62,34.81,56.55,29.11,0,0,0],backgroundColor:['#059669','#D97706','#D97706','#E11D48','#D97706','#059669','#059669','#059669'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{callback:v=>v+'%',color:TX},grid:{color:GC}}}}
+);
+
+/* Page 3 */
+mk('c3-sat','bar',['Very Low','Low','Medium','High','Very High'],
+  [{data:[62.52,49.27,23.99,9.89,13.72],backgroundColor:['#E11D48','#E11D48','#D97706','#059669','#D97706'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{callback:v=>v+'%',color:TX},grid:{color:GC}}}}
+);
+mk('c3-proj','bar',['2','3','4','5','6','7'],
+  [{data:[65.62,1.78,9.37,22.17,55.79,100],backgroundColor:['#E11D48','#059669','#059669','#D97706','#E11D48','#E11D48'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{callback:v=>v+'%',color:TX},grid:{color:GC}}}}
+);
+mk('c3-hrs','bar',['<150','150-175','175-200','200-225','225-250','250+'],
+  [{data:[35.57,20.93,2.16,7.50,22.83,38.79],backgroundColor:['#E11D48','#D97706','#059669','#059669','#D97706','#E11D48'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{callback:v=>v+'%',color:TX},grid:{color:GC}}}}
+);
+mk('c3-eval','bar',['Low (0-0.4)','Medium (0.4-0.6)','Good (0.6-0.8)','Excellent (0.8-1.0)'],
+  [{data:[0,34.17,5.83,30.81],backgroundColor:['#059669','#E11D48','#059669','#E11D48'],borderRadius:4}],
+  {scales:{x:{ticks:{color:TX,font:{size:10},maxRotation:15},grid:{display:false}},y:{ticks:{callback:v=>v+'%',color:TX},grid:{color:GC}}}}
+);
+
+/* Page 4 */
+const riskDepts=[{n:'IT (128 at risk)',r:68.0},{n:'Technical (312)',r:67.3},{n:'HR (78)',r:61.5},{n:'Accounting (101)',r:61.4},{n:'Sales (413)',r:60.5},{n:'Management (48)',r:60.4},{n:'Support (221)',r:60.2},{n:'Marketing (84)',r:52.4},{n:'Product Mgmt (89)',r:47.2},{n:'R&D (85)',r:42.4}];
+document.getElementById('c4-risk-bars').innerHTML=riskDepts.map(d=>`<div class="hbar-row"><div class="hbar-lbl">${d.n}</div><div class="hbar-track"><div class="hbar-fill" style="width:0%;background:${d.r>=65?'#E11D48':d.r>=55?'#D97706':'#1B6CA8'}" data-width="${d.r}"></div></div><div class="hbar-val">${d.r.toFixed(1)}%</div></div>`).join('');
+
+const matrixData={
+  'HR':{high:13.33,low:27.46,medium:32.59},'Accounting':{high:6.76,low:27.65,medium:29.85},
+  'Technical':{high:12.44,low:27.55,medium:25.63},'Support':{high:5.67,low:33.94,medium:16.77},
+  'Sales':{high:5.20,low:33.21,medium:17.10},'Marketing':{high:11.25,low:31.34,medium:18.09},
+  'IT':{high:4.82,low:28.24,medium:18.13},'Product Mgmt':{high:8.82,low:23.28,medium:22.72},
+  'R&D':{high:7.84,low:15.11,medium:16.67},'Management':{high:0.44,low:32.78,medium:13.78}
+};
+function mColor(v){
+  if(v>=30)return{bg:'#FFF1F2',tx:'#9F1239'};
+  if(v>=20)return{bg:'#FFFBEB',tx:'#78350F'};
+  if(v>=10)return{bg:'#FFF7ED',tx:'#9A3412'};
+  return{bg:'#F0FDF4',tx:'#064E3B'};
+}
+const mtbl=document.getElementById('c4-matrix');
+mtbl.innerHTML=`<tr><th>Department</th><th>High Salary</th><th>Medium Salary</th><th>Low Salary</th></tr>`+
+Object.entries(matrixData).map(([dept,d])=>`<tr><td>${dept}</td>`+['high','medium','low'].map(s=>{const c=mColor(d[s]);return`<td><span class="mc" style="background:${c.bg};color:${c.tx}">${d[s].toFixed(1)}%</span></td>`;}).join('')+'</tr>').join('');
+
+mk('c4-corr','bar',['Satisfaction','Work Accident','Promotion','Evaluation','Projects','Hours','Tenure'],
+  [{data:[-38.84,-15.46,-6.18,0.66,2.38,7.13,14.48],backgroundColor:['-38.84','-15.46','-6.18','0.66','2.38','7.13','14.48'].map(v=>parseFloat(v)<0?'#059669':'#E11D48'),borderRadius:4}],
+  {indexAxis:'y',scales:{x:{ticks:{callback:v=>v+'%',color:TX},grid:{color:GC}},y:{ticks:{color:TX},grid:{display:false}}}}
+);
+
+/* Page 5 */
+mk('c5-promo','bar',['Not Promoted','Promoted'],[{data:[24.20,5.96],backgroundColor:['#E11D48','#059669'],borderRadius:6}],{scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{callback:v=>v+'%',color:TX},grid:{color:GC}}}});
+mk('c5-acc','bar',['No Accident','Had Accident'],[{data:[26.52,7.79],backgroundColor:['#E11D48','#059669'],borderRadius:6}],{scales:{x:{ticks:{color:TX},grid:{display:false}},y:{ticks:{callback:v=>v+'%',color:TX},grid:{color:GC}}}});
+mk('c5-champs','bar',['Sales','Technical','Support','IT','Marketing','Product Mgmt','R&D','Accounting','HR','Management'],
+  [{data:[551,356,341,170,141,122,114,99,90,86],backgroundColor:'#7C3AED',borderRadius:4}],
+  {scales:{x:{ticks:{color:TX,maxRotation:30},grid:{display:false}},y:{ticks:{color:TX},grid:{color:GC}}}}
+);
+
+/* ── Interactions ── */
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(()=>document.querySelectorAll('#'+id+' .reveal').forEach(el=>el.classList.add('visible')),50);
+  setTimeout(animateBars,200);
+}
+
+/* Scroll reveal */
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+/* Animated horizontal bars */
+function animateBars(){
+  document.querySelectorAll('.hbar-fill[data-width]').forEach(bar=>{
+    const w=bar.getAttribute('data-width');
+    setTimeout(()=>bar.style.width=w+'%',100);
+  });
+}
+setTimeout(animateBars,400);
+
+/* Trigger reveals on first page */
+setTimeout(()=>document.querySelectorAll('#p1 .reveal').forEach(el=>el.classList.add('visible')),100);
+</script>
+</body>
+</html>
