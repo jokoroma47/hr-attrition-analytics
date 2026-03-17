@@ -65,7 +65,7 @@ recommendations.
 
 ## Tools Used
 
-Excel · MySQL · Python · HTML · CSS · JavaScript
+Excel · MySQL 
 
 ---
 
